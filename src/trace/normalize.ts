@@ -33,6 +33,7 @@ import {
   pickString,
 } from './schema'
 import { buildConversation } from './conversationTree'
+import { buildForgeHttpTraceConversations, isForgeHttpTraceRecord } from './forgeHttpTrace'
 
 /* ------------------------------------------------------------------ */
 /* Tool calls                                                          */
@@ -684,6 +685,27 @@ function detectFormat(requestLogs: RawRecord[], ordinary: RawRecord[]): TraceFor
 /* ------------------------------------------------------------------ */
 
 export function normalizeTrace(parsed: ParseResult): NormalizedTrace {
+  // Forge HTTP trace: paired request/response records keyed by `id`
+  const forgeRecords = parsed.records.filter((r) => isForgeHttpTraceRecord(r.data))
+  if (forgeRecords.length > 0 && forgeRecords.length >= parsed.records.length / 2) {
+    const { conversations, orphans, requestCount, responseCount } =
+      buildForgeHttpTraceConversations(parsed.records)
+    conversations.sort((a, b) => (a.messages[0]?.line ?? 0) - (b.messages[0]?.line ?? 0))
+    return {
+      fileName: parsed.fileName,
+      formatInfo: {
+        format: 'forge-http-trace',
+        label: 'Forge HTTP Trace',
+        detail: `${requestCount} request${requestCount === 1 ? '' : 's'} · ${responseCount} response${responseCount === 1 ? '' : 's'} · ${conversations.length} conversation${conversations.length === 1 ? '' : 's'}`,
+      },
+      conversations,
+      errors: parsed.errors,
+      totalLines: parsed.totalLines,
+      recordCount: parsed.records.length,
+      orphanRecords: orphans,
+    }
+  }
+
   // Partition request-log snapshots from ordinary records
   const requestLogRecords: RawRecord[] = []
   const ordinaryRecords: RawRecord[] = []

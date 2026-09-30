@@ -98,7 +98,12 @@ export function contentToText(content: JsonValue | undefined): string {
             const name = typeof part.name === 'string' ? part.name : 'tool'
             return `[tool_use: ${name}]`
           }
-          if (part.type === 'tool_result') return contentToText(part.content)
+          if (part.type === 'tool_result') return contentToText(part.content ?? part.result)
+          // Forge-style blocks
+          if (part.type === 'tool_call') {
+            const name = typeof part.name === 'string' ? part.name : 'tool'
+            return `[tool_call: ${name}]`
+          }
           if (part.type === 'image') {
             const src = isObject(part.source) ? part.source : undefined
             const media = src && typeof src.media_type === 'string' ? src.media_type : 'image'

@@ -103,6 +103,8 @@ function isTextBlock(block: unknown): boolean {
   if (typeof block === 'string') return true
   if (block === null || typeof block !== 'object' || Array.isArray(block)) return false
   const b = block as Record<string, unknown>
+  // Forge text blocks carry no `type` — just `{ text }`.
+  if (b.type === undefined) return typeof b.text === 'string' && Object.keys(b).length === 1
   if (b.type !== 'text') return false
   return typeof b.text === 'string' || typeof b.value === 'string'
 }

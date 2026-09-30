@@ -159,6 +159,7 @@ export type TraceFormat =
   | 'openai-chat'
   | 'request-log'
   | 'event-log'
+  | 'forge-http-trace'
   | 'unknown'
 
 export interface TraceFormatInfo {
