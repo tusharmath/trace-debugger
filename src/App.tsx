@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,6 +12,7 @@ import { useDefaultLayout } from 'react-resizable-panels'
 import { Bug, X } from 'lucide-react'
 import { ConversationSelector } from '@/components/ConversationSelector'
 import { ConversationTree } from '@/components/ConversationTree'
+import { FormatBadge } from '@/components/FormatBadge'
 import { MessageInspector } from '@/components/MessageInspector'
 import { TraceUploader } from '@/components/TraceUploader'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -103,6 +104,7 @@ function App() {
           <Separator orientation="vertical" className="h-4" />
           {trace && (
             <>
+              <FormatBadge formatInfo={trace.formatInfo} />
               <ConversationSelector
                 conversations={trace.conversations}
                 selectedId={conversationId}
@@ -112,14 +114,6 @@ function App() {
                   setTimeWindow(null)
                 }}
               />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                    {trace.formatInfo.label}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{trace.formatInfo.detail}</TooltipContent>
-              </Tooltip>
               <span className="hidden font-mono text-[10px] text-muted-foreground sm:inline">
                 {trace.fileName} · {trace.recordCount} records / {trace.totalLines} lines
               </span>
