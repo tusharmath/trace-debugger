@@ -115,7 +115,8 @@ export function contentToText(content: JsonValue | undefined): string {
         return ''
       })
       .filter(Boolean)
-      .join('\n')
+      // Blank line between blocks so markdown keeps them as separate paragraphs.
+      .join('\n\n')
   }
   if (isObject(content)) {
     if (typeof content.text === 'string') return content.text

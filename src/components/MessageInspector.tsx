@@ -109,6 +109,35 @@ function isTextBlock(block: unknown): boolean {
   return typeof b.text === 'string' || typeof b.value === 'string'
 }
 
+/** The text carried by a block that passed `isTextBlock`. */
+function textBlockText(block: unknown): string {
+  if (typeof block === 'string') return block
+  const b = block as Record<string, unknown>
+  if (typeof b.text === 'string') return b.text
+  if (typeof b.value === 'string') return b.value
+  return ''
+}
+
+/**
+ * Several text blocks rendered as distinct sections. Joining them into one
+ * string loses the boundaries — markdown folds a single newline into the
+ * preceding paragraph, so consecutive blocks read as one run of text.
+ */
+function TextBlocks({ blocks, total }: { blocks: { index: number; text: string }[]; total: number }) {
+  return (
+    <div className="space-y-2">
+      {blocks.map(({ index, text }) => (
+        <div key={index}>
+          <SectionHeading>
+            block {index + 1} / {total}
+          </SectionHeading>
+          {looksLikeMarkdown(text) ? <Markdown text={text} /> : <PlainText text={text} />}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function ContentView({ message }: { message: TraceMessage }) {
   const { content, contentText } = message
   const [mode, setMode] = useState<'auto' | 'structured' | 'raw'>('auto')
@@ -128,6 +157,14 @@ function ContentView({ message }: { message: TraceMessage }) {
     contentText.length > 0
   const showAsProse = !isStructured || textOnly
   const md = showAsProse && looksLikeMarkdown(contentText)
+  // Per-block rendering keeps the original array index so the label lines up
+  // with the vector shown in `structured` mode even when blank blocks are skipped.
+  const blocks =
+    mode === 'auto' && textOnly && Array.isArray(content) && content.length > 1
+      ? content
+          .map((b, index) => ({ index, text: textBlockText(b) }))
+          .filter((b) => b.text.trim().length > 0)
+      : null
 
   return (
     <div>
@@ -176,6 +213,8 @@ function ContentView({ message }: { message: TraceMessage }) {
         )
       ) : !showAsProse ? (
         <JsonViewer value={content!} label="content" />
+      ) : blocks && blocks.length > 1 ? (
+        <TextBlocks blocks={blocks} total={(content as unknown[]).length} />
       ) : md ? (
         <Markdown text={contentText} />
       ) : (
